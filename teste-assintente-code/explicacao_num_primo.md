@@ -1,82 +1,198 @@
 # Explicação do Código Python: Verificação de Números Primos
 
-Este documento explica o código Python presente no arquivo `num_primos.py`, que implementa uma função para verificar se um número é primo.
+Este documento explica o código Python refatorado no arquivo `num_primos.py`, que implementa um módulo completo para verificar números primos seguindo padrões de **Clean Code**.
 
-## Código Python
+## Visão Geral
+
+O módulo contém:
+- **Função principal**: `is_prime()` - verifica se um número é primo
+- **Funções auxiliares**: `get_prime_status()` e `print_prime_results()` - funções de suporte
+- **Função principal**: `main()` - coordena a execução
+
+---
+
+## Código Python Refatorado
 
 ```python
-def is_prime(n: int) -> bool:
-    """Retorna True se n for primo, caso contrário False."""
-    if n <= 1:
-        return False
-    if n <= 3:
-        return True
-    if n % 2 == 0 or n % 3 == 0:
+"""
+Módulo para verificação de números primos.
+
+Este módulo fornece funções para identificar se um número é primo
+usando algoritmos otimizados.
+"""
+
+
+def is_prime(number: int) -> bool:
+    """
+    Verifica se um número é primo.
+
+    Um número primo é um número natural maior que 1 que possui
+    exatamente dois divisores positivos: 1 e ele mesmo.
+
+    Args:
+        number: Um número inteiro a ser verificado.
+
+    Returns:
+        True se o número for primo, False caso contrário.
+
+    Raises:
+        TypeError: Se number não for um inteiro.
+
+    Examples:
+        >>> is_prime(17)
+        True
+        >>> is_prime(20)
+        False
+    """
+    if not isinstance(number, int):
+        raise TypeError(f"Esperado int, recebido {type(number).__name__}")
+
+    if number <= 1:
         return False
 
-    i = 5
-    while i * i <= n:
-        if n % i == 0 or n % (i + 2) == 0:
+    if number <= 3:
+        return True
+
+    # Elimina múltiplos de 2 e 3
+    if number % 2 == 0 or number % 3 == 0:
+        return False
+
+    # Verifica divisores da forma 6k ± 1 até √n
+    divisor = 5
+    while divisor * divisor <= number:
+        if number % divisor == 0 or number % (divisor + 2) == 0:
             return False
-        i += 6
+        divisor += 6
 
     return True
 
 
+def get_prime_status(numbers: list[int]) -> dict[int, bool]:
+    """
+    Obtém o status primo para uma lista de números.
+
+    Args:
+        numbers: Lista de números inteiros.
+
+    Returns:
+        Dicionário com números como chaves e status primo como valores.
+    """
+    return {num: is_prime(num) for num in numbers}
+
+
+def print_prime_results(numbers: list[int]) -> None:
+    """
+    Exibe se cada número em uma lista é primo.
+
+    Args:
+        numbers: Lista de números inteiros a verificar.
+    """
+    for number in numbers:
+        status = "é primo" if is_prime(number) else "não é primo"
+        print(f"{number} {status}")
+
+
+def main() -> None:
+    """Função principal com exemplos de teste."""
+    test_numbers = [0, 1, 2, 3, 4, 5, 17, 18, 19, 20, 97]
+    print_prime_results(test_numbers)
+
+
 if __name__ == "__main__":
-    numeros = [0, 1, 2, 3, 4, 5, 17, 18, 19, 20, 97]
-    for numero in numeros:
-        print(f"{numero} é primo? {is_prime(numero)}")
+    main()
 ```
 
-## Explicação Detalhada
+---
 
-### Função `is_prime(n: int) -> bool`
+## Melhorias Implementadas (Clean Code)
 
-Esta função verifica se um número inteiro `n` é primo. Um número primo é um número maior que 1 que não tem divisores positivos além de 1 e ele mesmo.
+### 1. **Docstring de Módulo**
+   - Adicionado docstring descritivo no início do arquivo.
+   - Explica o propósito e conteúdo do módulo.
 
-- **Parâmetros**:
-  - `n`: O número a ser verificado (tipo `int`).
+### 2. **Nomes Descritivos**
+   - `n` → `number`: Nome mais claro e expressivo
+   - `i` → `divisor`: Identifica o propósito da variável
+   - `numeros` → `test_numbers`: Mais específico e em inglês (padrão)
 
-- **Retorno**:
-  - `bool`: `True` se o número for primo, `False` caso contrário.
+### 3. **Docstrings Completas**
+   - Adicionadas seções: Args, Returns, Raises, Examples
+   - Seguem o padrão Google/NumPy para documentação
+   - Facilitam compreensão e uso da função
 
-### Lógica da Função
+### 4. **Type Hints Aprimorados**
+   - `list[int]` em vez de `list` (tipo parametrizado)
+   - `dict[int, bool]` para retornos de dicionário
+   - `None` para funções sem retorno
 
-1. **Verificação inicial para números pequenos**:
-   - Se `n <= 1`, retorna `False` (1 e números negativos não são primos).
-   - Se `n <= 3`, retorna `True` (2 e 3 são primos).
+### 5. **Validação de Entrada**
+   - Adicionada verificação de tipo com `isinstance()`
+   - Lança `TypeError` com mensagem descritiva se necessário
 
-2. **Verificação de divisibilidade por 2 e 3**:
-   - Se `n` for divisível por 2 ou 3, retorna `False`.
+### 6. **Comentários Estratégicos**
+   - Adicionados apenas onde a lógica não é óbvia
+   - Explicam o "por quê" e não o "o quê"
 
-3. **Loop de verificação para outros fatores**:
-   - Inicia com `i = 5`.
-   - Enquanto `i * i <= n` (ou seja, enquanto `i` for menor ou igual à raiz quadrada de `n`):
-     - Verifica se `n` é divisível por `i` ou por `i + 2` (que são os próximos números ímpares).
-     - Se for divisível, retorna `False`.
-     - Incrementa `i` em 6 (pulando para o próximo número que não é múltiplo de 2 ou 3).
-   - Se nenhum divisor for encontrado, retorna `True`.
+### 7. **Separação de Responsabilidades**
+   - `is_prime()`: Apenas valida se é primo
+   - `get_prime_status()`: Retorna dicionário de resultados
+   - `print_prime_results()`: Exibe resultados formatados
+   - `main()`: Coordena a execução
 
-Essa abordagem é eficiente porque:
-- Elimina rapidamente números pares e múltiplos de 3.
-- Verifica apenas até a raiz quadrada de `n`, reduzindo o número de operações.
-- Usa incrementos de 6 para pular números desnecessários.
+### 8. **Função Main()**
+   - Padrão Python para ponto de entrada
+   - Deixa claro qual é a execução principal
 
-### Bloco de Teste (`if __name__ == "__main__"`)
+---
 
-Este bloco é executado apenas quando o script é rodado diretamente (não quando importado como módulo).
+## Explicação da Lógica
 
-- Define uma lista de números de teste: `[0, 1, 2, 3, 4, 5, 17, 18, 19, 20, 97]`.
-- Para cada número na lista, chama a função `is_prime` e imprime o resultado no formato: "{numero} é primo? {resultado}".
+### Algoritmo `is_prime()`
 
-Isso permite testar a função com vários casos, incluindo números primos e não primos.
+O algoritmo utiliza otimizações para eficiência:
 
-## Como Executar
+1. **Tratamento de casos especiais**:
+   - Números ≤ 1: não são primos
+   - 2 e 3: são primos
+   
+2. **Eliminação rápida**:
+   - Se divisível por 2 ou 3: não é primo
+   
+3. **Loop otimizado**:
+   - Verifica apenas divisores da forma `6k ± 1`
+   - Itera apenas até √n
+   - Reduz significativamente o número de operações
 
-Para executar o código, use o comando:
-```
+**Complexidade**: O(√n) - muito eficiente para números grandes
+
+---
+
+## Como Usar
+
+### Executar o script:
+```bash
 python num_primos.py
 ```
 
-Isso irá imprimir os resultados dos testes na tela.
+### Importar como módulo:
+```python
+from num_primos import is_prime, get_prime_status
+
+# Verificar um número
+print(is_prime(17))  # True
+
+# Verificar múltiplos números
+status = get_prime_status([2, 3, 4, 5])
+print(status)  # {2: True, 3: True, 4: False, 5: True}
+```
+
+---
+
+## Benefícios da Refatoração
+
+✅ **Mais legível**: Nomes claros e estrutura organizada  
+✅ **Mais mantível**: Funções com responsabilidades únicas  
+✅ **Mais robusto**: Validação de entrada e tratamento de erros  
+✅ **Mais documentado**: Docstrings detalhadas e exemplos  
+✅ **Mais reutilizável**: Pode ser importado como módulo  
+✅ **Mais testável**: Funções puras e isoladas
