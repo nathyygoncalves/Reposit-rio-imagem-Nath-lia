@@ -1,149 +1,342 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teachable Machine - Classificador</title>
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        body {
-            background: linear-gradient(135deg, #0d6efd, #6610f2);
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskFlow — Gerenciador de Tarefas</title>
+  <meta name="description" content="Gerencie suas tarefas diárias com o TaskFlow. Organize trabalho, estudos e vida pessoal em um só lugar." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            navy: { 950: '#0f172a', 900: '#0f1f3a', 800: '#1e293b' }
+          }
         }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0f172a; font-family: 'Inter', sans-serif; }
 
-        .card {
-            border-radius: 20px;
-            padding: 20px;
-            background: #ffffff;
-            color: #333;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
+    /* Glassmorphism */
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-strong {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
 
-        #webcam-container canvas {
-            border-radius: 15px;
-            border: 3px solid #0d6efd;
-            width: 100%;
-            max-width: 300px;
-        }
+    /* Animated gradient bg */
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 20%, rgba(99,102,241,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 70% 50% at 80% 80%, rgba(16,185,129,0.1) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 50% 50%, rgba(139,92,246,0.08) 0%, transparent 70%);
+    }
 
-        .btn-start {
-            background: linear-gradient(45deg, #0d6efd, #6610f2);
-            border: none;
-            color: white;
-            font-weight: bold;
-            padding: 12px 20px;
-            border-radius: 50px;
-            transition: 0.3s;
-        }
+    /* Input & select styling */
+    .field {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #f1f5f9;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field::placeholder { color: rgba(255,255,255,0.3); }
+    .field:focus {
+      outline: none;
+      border-color: rgba(99,102,241,0.6);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+    .field option { background: #1e293b; color: #f1f5f9; }
 
-        .btn-start:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
+    /* Btn primary */
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-primary:hover {
+      opacity: 0.9; transform: translateY(-1px);
+      box-shadow: 0 8px 25px rgba(99,102,241,0.4);
+    }
+    .btn-primary:active { transform: translateY(0); }
 
-        .progress {
-            height: 20px;
-            border-radius: 10px;
-            background-color: #e9ecef;
-        }
+    /* Btn ghost */
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
 
-        .progress-bar {
-            font-size: 12px;
-            font-weight: bold;
-        }
-    </style>
+    /* Task card */
+    .task-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .task-card:hover {
+      border-color: rgba(255,255,255,0.14);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+    .task-card.done { opacity: 0.45; }
+    .task-card.done .task-title { text-decoration: line-through; }
+
+    /* Badge types */
+    .badge-work   { background: rgba(59,130,246,0.2); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+    .badge-personal { background: rgba(168,85,247,0.2); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.3); }
+    .badge-study  { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+
+    /* Btn complete */
+    .btn-complete {
+      border: 1px solid rgba(16,185,129,0.4);
+      color: #6ee7b7;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-complete:hover { background: rgba(16,185,129,0.15); transform: scale(1.03); }
+
+    /* Btn delete */
+    .btn-delete {
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-delete:hover { background: rgba(239,68,68,0.15); transform: scale(1.03); }
+
+    /* Error message */
+    .error-msg { display: none; }
+    .error-msg.show { display: block; }
+
+    /* Slide animation */
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .slide-up { animation: slideUp 0.35s ease forwards; }
+
+    /* Fade in */
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .fade-in { animation: fadeIn 0.4s ease forwards; }
+
+    /* Screen toggle */
+    .screen { display: none; }
+    .screen.active { display: flex; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 9999px; }
+  </style>
 </head>
-<body>
+<body class="min-h-screen text-slate-100 relative overflow-x-hidden">
 
-<div class="container">
-    <div class="card text-center mx-auto" style="max-width: 500px;">
-        <h3 class="mb-3">🤖 Classificador de Imagens</h3>
+  <!-- Ambient glow -->
+  <div class="bg-glow"></div>
 
-        <button class="btn btn-start mb-4" onclick="init()">
-            📷 Ativar Câmera
+  <!-- ============================================================ -->
+  <!-- LOGIN SCREEN -->
+  <!-- ============================================================ -->
+  <div id="screen-login" class="screen active min-h-screen items-center justify-center p-4 relative z-10">
+    <div class="glass-strong rounded-2xl p-8 w-full max-w-md shadow-2xl slide-up">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 mb-4 shadow-lg shadow-indigo-500/30">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-white tracking-tight">TaskFlow</h1>
+        <p class="text-slate-400 text-sm mt-1">Bem-vindo de volta</p>
+      </div>
+
+      <!-- Form -->
+      <form id="form-login" novalidate class="space-y-4">
+        <div>
+          <label for="login-email" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">E-mail</label>
+          <input id="login-email" type="email" placeholder="seu@email.com"
+            class="field w-full rounded-xl px-4 py-3 text-sm" autocomplete="email" />
+        </div>
+        <div>
+          <label for="login-password" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Senha</label>
+          <input id="login-password" type="password" placeholder="••••••••"
+            class="field w-full rounded-xl px-4 py-3 text-sm" autocomplete="current-password" />
+        </div>
+
+        <!-- Error -->
+        <p id="login-error" class="error-msg text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"></p>
+
+        <button id="btn-login" type="submit"
+          class="btn-primary w-full py-3 rounded-xl text-sm font-semibold text-white mt-2">
+          Entrar
         </button>
+      </form>
 
-        <div id="webcam-container" class="mb-4 d-flex justify-content-center"></div>
-
-        <div id="label-container"></div>
+      <p class="text-center text-slate-500 text-sm mt-6">
+        Não tem conta?
+        <button id="go-register" class="text-indigo-400 hover:text-indigo-300 font-medium transition-colors ml-1">Cadastre-se</button>
+      </p>
     </div>
-</div>
+  </div>
 
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+  <!-- ============================================================ -->
+  <!-- REGISTER SCREEN -->
+  <!-- ============================================================ -->
+  <div id="screen-register" class="screen min-h-screen items-center justify-center p-4 relative z-10">
+    <div class="glass-strong rounded-2xl p-8 w-full max-w-md shadow-2xl slide-up">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 mb-4 shadow-lg shadow-emerald-500/30">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold text-white tracking-tight">Criar Conta</h1>
+        <p class="text-slate-400 text-sm mt-1">Comece a organizar sua vida</p>
+      </div>
 
-<script>
-    const URL = "./my_model/";
+      <form id="form-register" novalidate class="space-y-4">
+        <div>
+          <label for="reg-name" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Nome</label>
+          <input id="reg-name" type="text" placeholder="Seu nome completo"
+            class="field w-full rounded-xl px-4 py-3 text-sm" autocomplete="name" />
+        </div>
+        <div>
+          <label for="reg-email" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">E-mail</label>
+          <input id="reg-email" type="email" placeholder="seu@email.com"
+            class="field w-full rounded-xl px-4 py-3 text-sm" autocomplete="email" />
+        </div>
+        <div>
+          <label for="reg-password" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Senha</label>
+          <input id="reg-password" type="password" placeholder="Mínimo 6 caracteres"
+            class="field w-full rounded-xl px-4 py-3 text-sm" autocomplete="new-password" />
+        </div>
 
-    let model, webcam, labelContainer, maxPredictions;
+        <p id="register-error" class="error-msg text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"></p>
+        <p id="register-success" class="error-msg text-emerald-400 text-xs bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2"></p>
 
-    async function init() {
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
+        <button id="btn-register" type="submit"
+          class="btn-primary w-full py-3 rounded-xl text-sm font-semibold text-white mt-2"
+          style="background: linear-gradient(135deg,#10b981,#0d9488)">
+          Criar Conta
+        </button>
+      </form>
 
-        model = await tmImage.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
+      <p class="text-center text-slate-500 text-sm mt-6">
+        Já tem conta?
+        <button id="go-login" class="text-emerald-400 hover:text-emerald-300 font-medium transition-colors ml-1">Entrar</button>
+      </p>
+    </div>
+  </div>
 
-        const flip = true;
-        webcam = new tmImage.Webcam(300, 300, flip);
-        await webcam.setup();
-        await webcam.play();
-        window.requestAnimationFrame(loop);
+  <!-- ============================================================ -->
+  <!-- DASHBOARD SCREEN -->
+  <!-- ============================================================ -->
+  <div id="screen-dashboard" class="screen min-h-screen flex-col relative z-10">
 
-        document.getElementById("webcam-container").innerHTML = "";
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
+    <!-- Header -->
+    <header class="glass border-b border-white/5 sticky top-0 z-20">
+      <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/30">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400">Bem-vindo de volta 👋</p>
+            <h2 id="header-username" class="text-sm font-semibold text-white leading-tight"></h2>
+          </div>
+        </div>
+        <button id="btn-logout" class="btn-ghost px-4 py-2 rounded-xl text-sm font-medium text-slate-300 flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          Sair
+        </button>
+      </div>
+    </header>
 
-        labelContainer = document.getElementById("label-container");
-        labelContainer.innerHTML = "";
+    <!-- Main content -->
+    <main class="max-w-3xl mx-auto w-full px-4 py-8 flex-1 space-y-8">
 
-        for (let i = 0; i < maxPredictions; i++) {
-            const div = document.createElement("div");
-            div.classList.add("mb-3");
+      <!-- Stats row -->
+      <div id="stats-row" class="grid grid-cols-3 gap-4"></div>
 
-            div.innerHTML = `
-                <div class="d-flex justify-content-between">
-                    <span id="label-${i}">Classe</span>
-                    <span id="value-${i}">0%</span>
-                </div>
-                <div class="progress">
-                    <div id="bar-${i}" class="progress-bar bg-primary" style="width: 0%">0%</div>
-                </div>
-            `;
+      <!-- Add Task Form -->
+      <section class="glass-strong rounded-2xl p-6 shadow-xl">
+        <h3 class="text-base font-semibold text-white mb-5 flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Nova Tarefa
+        </h3>
+        <form id="form-add-task" novalidate class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="task-title" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Título *</label>
+              <input id="task-title" type="text" placeholder="O que precisa ser feito?"
+                class="field w-full rounded-xl px-4 py-3 text-sm" />
+            </div>
+            <div>
+              <label for="task-type" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Categoria</label>
+              <select id="task-type" class="field w-full rounded-xl px-4 py-3 text-sm cursor-pointer">
+                <option value="work">💼 Trabalho</option>
+                <option value="personal">🙂 Pessoal</option>
+                <option value="study">📚 Estudos</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="task-desc" class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Descrição <span class="normal-case text-slate-500">(opcional)</span></label>
+            <textarea id="task-desc" rows="2" placeholder="Detalhes adicionais..."
+              class="field w-full rounded-xl px-4 py-3 text-sm resize-none"></textarea>
+          </div>
 
-            labelContainer.appendChild(div);
-        }
-    }
+          <p id="task-error" class="error-msg text-red-400 text-xs bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2"></p>
 
-    async function loop() {
-        webcam.update();
-        await predict();
-        window.requestAnimationFrame(loop);
-    }
+          <button id="btn-add-task" type="submit"
+            class="btn-primary px-6 py-3 rounded-xl text-sm font-semibold text-white flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Adicionar Tarefa
+          </button>
+        </form>
+      </section>
 
-    async function predict() {
-        const prediction = await model.predict(webcam.canvas);
+      <!-- Task List -->
+      <section>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold text-white flex items-center gap-2">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+            </svg>
+            Minhas Tarefas
+          </h3>
+          <!-- Filter -->
+          <div class="flex gap-2" id="filter-btns">
+            <button data-filter="all"       class="filter-btn active-filter px-3 py-1.5 rounded-lg text-xs font-medium">Todas</button>
+            <button data-filter="pending"   class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium">Pendentes</button>
+            <button data-filter="done"      class="filter-btn px-3 py-1.5 rounded-lg text-xs font-medium">Concluídas</button>
+          </div>
+        </div>
+        <div id="task-list" class="space-y-3"></div>
+      </section>
+    </main>
+  </div>
 
-        for (let i = 0; i < maxPredictions; i++) {
-            const prob = prediction[i].probability;
-            const percent = (prob * 100).toFixed(1);
-
-            document.getElementById(`label-${i}`).innerText = prediction[i].className;
-            document.getElementById(`value-${i}`).innerText = percent + "%";
-
-            const bar = document.getElementById(`bar-${i}`);
-            bar.style.width = percent + "%";
-            bar.innerText = percent + "%";
-        }
-    }
-</script>
-
+  <script src="app.js"></script>
 </body>
 </html>
